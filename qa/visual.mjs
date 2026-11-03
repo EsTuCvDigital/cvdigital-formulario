@@ -48,6 +48,8 @@ try {
 
   step = 'welcome';
   await page.goto(BASE, { waitUntil: 'networkidle' });
+  const localBanner = await page.getByText('Modo local sin Supabase').count();
+  record('Conexión Supabase configurada', localBanner === 0, `${localBanner} aviso(s)`);
   await page.getByRole('heading', { level: 1 }).first().waitFor();
   record('Portada visible', await page.getByText('Tu experiencia,').first().isVisible());
   await shot(page, '01-welcome-light');

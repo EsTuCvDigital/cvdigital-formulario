@@ -11,10 +11,10 @@ Tiempo estimado: **15 minutos**.
 - `.env.local` con la URL, la llave **anon** y la **service_role** de tu proyecto
   Supabase (`ptdpeuiuxikdjvizhgrx`).
 - **0001 ya ejecutada**: las tablas `cv_*` existen y la base tiene tu CV.
-- **0002 pendiente**: cierra el acceso público a `clientes`/`pedidos`. Es el
-  único paso antes de publicar la web.
+- **0002 aplicada**: `clientes`/`pedidos` tienen RLS y el panel/CLI usan
+  `x-panel-key`. La auditoría da 22/22.
 
-> Si instalas desde cero: ejecuta `0001` y después `0002`.
+> Si instalas desde cero: ejecuta `0001` y después `0002` (paso 1b).
 
 ---
 
@@ -197,10 +197,10 @@ Pasos:
 3. Cuando el run termine en verde, abre
    <https://estucvdigital.github.io/cvdigital-formulario/>.
 
-El workflow `.github/workflows/deploy.yml` compila con
-`VITE_BASE=/cvdigital-formulario/`, inyecta las variables desde los secretos y
-publica `dist/` como artefacto de Pages. **Nunca** pone `service_role` en el
-frontend.
+El workflow `.github/workflows/deploy.yml` se ejecuta en cada `push` a `main`
+(o a mano), compila con `VITE_BASE=/cvdigital-formulario/`, inyecta las variables
+desde los secretos y publica `dist/` como artefacto de Pages. **Nunca** pone
+`service_role` en el frontend.
 
 Alternativa Vercel/Netlify: build `npm run build`, publish `dist`, con las
 mismas variables `VITE_*`.

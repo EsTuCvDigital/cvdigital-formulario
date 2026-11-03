@@ -1,8 +1,8 @@
 name: Deploy to GitHub Pages
 
-# Se activa manualmente hasta que la migración 0002 esté aplicada.
-# Después de eso se puede agregar `push` para despliegue automático.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:

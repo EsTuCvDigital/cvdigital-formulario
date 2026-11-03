@@ -173,12 +173,13 @@ pasa **22/22** después. Ver [docs/SEGURIDAD.md](docs/SEGURIDAD.md).
   permisos de `anon`, inyección SQL/XSS, límites, consentimiento, referencias,
   llaves en el build y sinks XSS. Antes de 0002 marca **CRÍTICO** porque `anon`
   podía escribir en `clientes`. Requiere `service_role` en `.env.local`.
-- `npm run qa` ✅ **15/15** pruebas Playwright, **0 errores de consola**:
-  portada, tema oscuro, validación, normalización de URLs, los 8 pasos,
-  consentimiento obligatorio (sin llamada RPC cuando falta), envío, móvil y
-  recuperación de borrador tras recargar. Incluye dos regresiones específicas:
-  no debe haber errores de consentimiento ni avisos de envío **antes** de pulsar
-  “Enviar” (un bug real de envío implícito que se detectó y corrigió).
+- `npm run qa` ✅ **16/16** pruebas Playwright, **0 errores de consola**:
+  conexión Supabase configurada, portada, tema oscuro, validación,
+  normalización de URLs, los 8 pasos, consentimiento obligatorio (sin llamada
+  RPC cuando falta), envío, móvil y recuperación de borrador tras recargar.
+  Incluye dos regresiones específicas: no debe haber errores de consentimiento
+  ni avisos de envío **antes** de pulsar “Enviar” (un bug real de envío
+  implícito que se detectó y corrigió).
 - Capturas en `qa/screenshots/` (claro, oscuro y móvil) y `qa/report.json`.
 - La prueba contra **tu** Supabase es `npm run db:smoke` (requiere service_role):
   inserta, verifica cabecera + hijas + consentimiento y limpia.
@@ -228,8 +229,8 @@ pasa **22/22** después. Ver [docs/SEGURIDAD.md](docs/SEGURIDAD.md).
 
 - Repositorio: <https://github.com/EsTuCvDigital/cvdigital-formulario>
 - GitHub Pages: <https://estucvdigital.github.io/cvdigital-formulario/>
-- Workflow: `.github/workflows/deploy.yml` (manual hasta aplicar 0002; después
-  se puede activar en cada `push`).
+- Workflow: `.github/workflows/deploy.yml` (automático en cada `push` a `main`
+  y manual con `workflow_dispatch`).
 - Secretos del repo: `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (los inyecta
   el workflow; el `service_role` nunca va al frontend).
 
@@ -237,8 +238,8 @@ pasa **22/22** después. Ver [docs/SEGURIDAD.md](docs/SEGURIDAD.md).
 
 ## Pendientes recomendados
 
-- [ ] Ejecutar `0001` y `0002` en Supabase, luego `npm run db:smoke` y
-      `npm run test:security`.
+- [x] Ejecutar `0001` y `0002` en Supabase, `npm run db:smoke` y
+      `npm run test:security` (22/22 en esta instalación).
 - [ ] Reemplazar `PRIVACY_CONTACT` por el correo real.
 - [ ] Revisar el consentimiento con el responsable de privacidad.
 - [ ] Programar la retención (12 meses) con `pg_cron` o un job externo.

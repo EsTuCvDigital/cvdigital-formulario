@@ -1,7 +1,13 @@
 {
-  "base": "http://localhost:4173",
-  "executedAt": "2026-11-03T00:44:36.671Z",
+  "base": "https://estucvdigital.github.io/cvdigital-formulario/",
+  "executedAt": "2026-11-03T00:59:26.692Z",
   "results": [
+    {
+      "name": "Conexión Supabase configurada",
+      "ok": true,
+      "detail": "0 aviso(s)",
+      "step": "welcome"
+    },
     {
       "name": "Portada visible",
       "ok": true,

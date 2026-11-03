@@ -68,12 +68,16 @@ cv-formulario/
 │     └─ options.ts           catálogos (niveles, idiomas, etc.)
 ├─ supabase/
 │  ├─ migrations/0001_formulario_cv.sql
+│  ├─ migrations/0002_panel_access.sql
 │  ├─ verify.sql
 │  └─ rollback.sql
 ├─ scripts/cvadmin.mjs        verify / list / show / export / smoke / delete
+├─ scripts/patch-panel.mjs    header x-panel-key para panel y CLI
 ├─ qa/visual.mjs              pruebas Playwright + capturas
+├─ qa/security.mjs            auditoría real de RLS, RPC e inyecciones
 ├─ PASOS.md                   puesta en marcha
-└─ docs/DATOS.md              modelo de datos y contrato del payload
+├─ docs/DATOS.md              modelo de datos y contrato del payload
+└─ docs/SEGURIDAD.md          hallazgos, controles y riesgos residuales
 ```
 
 ---
@@ -125,8 +129,9 @@ Detalle del contrato y cómo añadir campos: **[docs/DATOS.md](docs/DATOS.md)**.
 
 ## Seguridad
 
-- **RLS activo sin políticas** en las 10 tablas: `anon` y `authenticated` no
-  pueden leer ni escribir directamente.
+- **RLS activo sin políticas** en las 10 tablas `cv_*`: `anon` y `authenticated`
+  no pueden leer ni escribir directamente. `clientes`/`pedidos` también tienen
+  RLS desde 0002 y solo aceptan `anon` con `x-panel-key`.
 - La única escritura pública es `submit_cv(jsonb)` (`security definer`), que:
   valida forma y tamaño (150 KB), normaliza textos, limita longitudes,
   comprueba email/consentimiento/fechas/URLs, evita duplicados y aplica
@@ -139,13 +144,18 @@ Detalle del contrato y cómo añadir campos: **[docs/DATOS.md](docs/DATOS.md)**.
 - El formulario no pide datos sensibles ni foto (decisión deliberada por ATS y
   privacidad).
 
-### Riesgo existente que **no** se tocó
+### Riesgo heredado corregido (migración 0002)
 
-El proyecto Supabase ya tenía las tablas `clientes` y `pedidos`, y su llave
-`anon` puede leerlas y escribirlas (documentado en `CVDigital/README.md`).
-Este entregable **no modificó** esas tablas para no romper tu panel actual.
-Recomendación aparte: mover el panel a Supabase Auth, activar RLS y dejar de
-usar la `anon` con permisos totales. Es un riesgo independiente de este formulario.
+La llave `anon` podía escribir en `clientes` y `pedidos`. Se comprobó con un
+INSERT controlado (HTTP 201) y se borró la fila. La migración
+`supabase/migrations/0002_panel_access.sql` activa RLS y exige el header
+`x-panel-key` para `anon`; el secreto se genera en la base y no está en el repo.
+El panel admin y el CLI de CVDigital se actualizan con
+`node scripts/patch-panel.mjs`. La llave pública del formulario queda limitada a
+`submit_cv`.
+
+Evidencia: `qa/security.mjs` marca el riesgo como **CRÍTICO** antes de 0002 y
+pasa **22/22** después. Ver [docs/SEGURIDAD.md](docs/SEGURIDAD.md).
 
 ---
 
@@ -159,6 +169,10 @@ usar la `anon` con permisos totales. Es un riesgo independiente de este formular
   embebido (PGlite): sintaxis, 10 tablas, vista, RLS, permisos de `anon`,
   `submit_cv`, tablas hijas, límite anti-abuso, rollback de URL/fecha inválida
   y lectura con `service_role`.
+- `npm run test:security` ✅ **22/22** comprobaciones de seguridad: RLS,
+  permisos de `anon`, inyección SQL/XSS, límites, consentimiento, referencias,
+  llaves en el build y sinks XSS. Antes de 0002 marca **CRÍTICO** porque `anon`
+  podía escribir en `clientes`. Requiere `service_role` en `.env.local`.
 - `npm run qa` ✅ **15/15** pruebas Playwright, **0 errores de consola**:
   portada, tema oscuro, validación, normalización de URLs, los 8 pasos,
   consentimiento obligatorio (sin llamada RPC cuando falta), envío, móvil y
@@ -210,9 +224,21 @@ usar la `anon` con permisos totales. Es un riesgo independiente de este formular
 
 ---
 
+## Publicación
+
+- Repositorio: <https://github.com/EsTuCvDigital/cvdigital-formulario>
+- GitHub Pages: <https://estucvdigital.github.io/cvdigital-formulario/>
+- Workflow: `.github/workflows/deploy.yml` (manual hasta aplicar 0002; después
+  se puede activar en cada `push`).
+- Secretos del repo: `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (los inyecta
+  el workflow; el `service_role` nunca va al frontend).
+
+---
+
 ## Pendientes recomendados
 
-- [ ] Ejecutar el SQL en Supabase y `npm run db:smoke`.
+- [ ] Ejecutar `0001` y `0002` en Supabase, luego `npm run db:smoke` y
+      `npm run test:security`.
 - [ ] Reemplazar `PRIVACY_CONTACT` por el correo real.
 - [ ] Revisar el consentimiento con el responsable de privacidad.
 - [ ] Programar la retención (12 meses) con `pg_cron` o un job externo.
@@ -220,7 +246,8 @@ usar la `anon` con permisos totales. Es un riesgo independiente de este formular
 - [ ] Panel interno de revisión (hoy se usa `db:list` / `db:show`).
 - [ ] Generación de PDF/DOCX y publicación de la hoja de vida web.
 - [ ] Correos transaccionales (confirmación y enlace de borrador).
-- [ ] Arreglar el riesgo de la llave `anon` en `clientes`/`pedidos`.
+- [ ] Mover el panel admin a Supabase Auth (hoy tiene contraseña en el HTML).
+- [ ] Rotar el `x-panel-key` si el panel o `.env` del CLI se filtran.
 - [ ] Si el formulario se hace público a gran escala: CAPTCHA (Turnstile/hCaptcha)
       y límite por IP en una Edge Function. Hoy hay honeypot y límite por correo.
 - [ ] Code-splitting del bundle (hoy 214 KB gzip; aceptable para un formulario).

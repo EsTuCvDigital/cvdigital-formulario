@@ -5,15 +5,16 @@ Tiempo estimado: **15 minutos**.
 
 ---
 
-## 0. Lo que ya está listo
+## 0. Estado de esta instalación
 
 - Formulario completo en `C:\Users\JACOB\cv-formulario`.
-- `.env.local` con la URL y la llave **anon** de tu proyecto Supabase
-  (`ptdpeuiuxikdjvizhgrx`). No hace falta crearlo.
-- La llave **service_role** todavía está vacía: solo se necesita para
-  listar / exportar / borrar desde la terminal.
+- `.env.local` con la URL, la llave **anon** y la **service_role** de tu proyecto
+  Supabase (`ptdpeuiuxikdjvizhgrx`).
+- **0001 ya ejecutada**: las tablas `cv_*` existen y la base tiene tu CV.
+- **0002 pendiente**: cierra el acceso público a `clientes`/`pedidos`. Es el
+  único paso antes de publicar la web.
 
-> ⚠️ Las tablas nuevas **no existen todavía**. Hay que ejecutar el SQL una vez.
+> Si instalas desde cero: ejecuta `0001` y después `0002`.
 
 ---
 
@@ -39,12 +40,40 @@ Tiempo estimado: **15 minutos**.
    Todas las filas deben decir **OK**.
 
 El script es idempotente: si lo ejecutas dos veces, no rompe nada.
-**No modifica** las tablas `clientes` ni `pedidos` que ya usas.
+**0001 no modifica** `clientes` ni `pedidos`; la 0002 las protege sin borrar datos.
 
 > Alternativa por terminal (opcional): si tienes `psql`, usa la cadena de
 > conexión que aparece en Supabase → **Connect** y ejecuta:
 > `psql "TU_CADENA_DE_CONEXION" -f supabase/migrations/0001_formulario_cv.sql`
 > El SQL Editor es más sencillo y evita problemas de red.
+
+### 1b. Proteger `clientes` y `pedidos` (0002)
+
+La llave `anon` del formulario no debe poder tocar los datos del negocio.
+
+1. Copia el SQL al portapapeles (si falla, abre el archivo con Notepad y copia):
+
+   ```powershell
+   Get-Content .\supabase\migrations\0002_panel_access.sql -Raw | Set-Clipboard
+   start https://supabase.com/dashboard/project/ptdpeuiuxikdjvizhgrx/sql/new
+   ```
+
+2. Pega en el SQL Editor y pulsa **Run**. Debe salir:
+   `OK · clientes/pedidos protegidos`.
+3. Ajusta el panel y el CLI para que envíen el header privado:
+
+   ```powershell
+   node scripts/patch-panel.mjs
+   ```
+
+4. Comprueba la seguridad:
+
+   ```powershell
+   npm run test:security
+   ```
+
+   Antes de 0002 marca **CRÍTICO** (anon podía escribir en `clientes`).
+   Después debe dar **22/22 OK**.
 
 ---
 
@@ -147,24 +176,39 @@ select * from public.cv_full where public_id = 'CV-2601-ABC123';
 
 ---
 
-## 7. Publicar en internet
+## 7. Publicar en GitHub Pages
 
-El formulario es estático: no necesita servidor propio.
+El repositorio ya está creado con el workflow de GitHub Actions:
 
-1. `npm run build` genera la carpeta `dist`.
-2. Súbela a Vercel, Netlify o Cloudflare Pages (build: `npm run build`,
-   publish: `dist`).
-3. Configura en el hosting las variables:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-4. **Nunca** configures `SUPABASE_SERVICE_ROLE_KEY` en el hosting del frontend.
+- Código: <https://github.com/EsTuCvDigital/cvdigital-formulario>
+- Web: <https://estucvdigital.github.io/cvdigital-formulario/>
+- Secretos del repo: `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
+
+Pasos:
+
+1. Aplica **0002** (paso 1b). Sin eso no se publica.
+2. Dispara el workflow:
+
+   ```powershell
+   gh workflow run deploy.yml --repo EsTuCvDigital/cvdigital-formulario
+   gh run list --repo EsTuCvDigital/cvdigital-formulario --limit 3
+   ```
+
+3. Cuando el run termine en verde, abre
+   <https://estucvdigital.github.io/cvdigital-formulario/>.
+
+El workflow `.github/workflows/deploy.yml` compila con
+`VITE_BASE=/cvdigital-formulario/`, inyecta las variables desde los secretos y
+publica `dist/` como artefacto de Pages. **Nunca** pone `service_role` en el
+frontend.
+
+Alternativa Vercel/Netlify: build `npm run build`, publish `dist`, con las
+mismas variables `VITE_*`.
 
 Antes de publicar:
 
-- Cambia el correo de privacidad en `src/lib/constants.ts`
-  (`PRIVACY_CONTACT`).
+- Cambia el correo de privacidad en `src/lib/constants.ts` (`PRIVACY_CONTACT`).
 - Revisa el texto de consentimiento con tu responsable legal.
-- Define el dominio y activa HTTPS.
 
 ---
 
@@ -187,6 +231,8 @@ No hay que tocar el código.
 | “La base de datos todavía no tiene el formulario instalado” | Falta el SQL | Ejecuta `supabase/migrations/0001_formulario_cv.sql` |
 | `Supabase 401` al listar | Llave incorrecta o falta service_role | Revisa `.env.local` |
 | `permission denied for table cv_submissions` con anon | Es correcto: RLS bloquea la lectura | Usa `service_role` solo en scripts |
+| El panel o `cvdb.mjs` da 401/403 después de 0002 | Falta el header `x-panel-key` | Ejecuta `node scripts/patch-panel.mjs` |
+| `qa/security.mjs` marca CRÍTICO en `clientes` | Falta ejecutar 0002 | Ejecuta `0002_panel_access.sql` en Supabase |
 | El formulario dice “Modo local sin Supabase” | Faltan `VITE_*` o el servidor no se reinició | Completa `.env.local` y reinicia `npm run dev` |
 | “Ya recibimos varios envíos con este correo hoy” | Límite anti-abuso (5 al día) | Espera 24 h o borra la fila de `cv_submission_log` de ese correo (solo guarda un hash) |
 | El enlace de LinkedIn se guarda sin `https://` | No saliste del campo | El formulario lo completa al salir; también se normaliza al enviar |
@@ -205,6 +251,7 @@ No hay que tocar el código.
 | `npm run typecheck` | Revisa TypeScript |
 | `npm test` | Pruebas unitarias del formulario (Vitest) |
 | `npm run test:sql` | Prueba el SQL en un Postgres embebido (PGlite) |
+| `npm run test:security` | Auditoría real de RLS, RPC e inyecciones |
 | `npm run qa` | Pruebas visuales con Playwright (requiere `npm run preview`) |
 | `npm run db:verify` | Comprueba migración, RLS y llaves |
 | `npm run db:list` | Lista los CV |

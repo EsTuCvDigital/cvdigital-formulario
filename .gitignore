@@ -1,0 +1,31 @@
+# Dependencias
+node_modules
+dist
+dist-ssr
+
+# Entorno y secretos (NUNCA subir)
+.env
+.env.local
+.env.*.local
+*.local
+
+# Salidas del CLI
+exports/
+
+# Sistema / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.log
+npm-debug.log*
+
+# Pruebas
+coverage
+qa/screenshots
+qa/preview.log
+qa/preview.pid
+qa/dev.log
+qa/dev.pid
+*.tsbuildinfo

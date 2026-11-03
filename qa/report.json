@@ -1,0 +1,97 @@
+{
+  "base": "http://localhost:4173",
+  "executedAt": "2026-11-03T00:44:36.671Z",
+  "results": [
+    {
+      "name": "Portada visible",
+      "ok": true,
+      "detail": "",
+      "step": "welcome"
+    },
+    {
+      "name": "Tema oscuro activo",
+      "ok": true,
+      "detail": "",
+      "step": "welcome"
+    },
+    {
+      "name": "Validación bloquea campos vacíos",
+      "ok": true,
+      "detail": "4 campos marcados",
+      "step": "contact"
+    },
+    {
+      "name": "Normaliza URL sin protocolo",
+      "ok": true,
+      "detail": "https://linkedin.com/in/ana-gomez",
+      "step": "contact"
+    },
+    {
+      "name": "Paso de perfil visible",
+      "ok": true,
+      "detail": "",
+      "step": "profile"
+    },
+    {
+      "name": "Paso de experiencia visible",
+      "ok": true,
+      "detail": "",
+      "step": "experience"
+    },
+    {
+      "name": "Paso de habilidades visible",
+      "ok": true,
+      "detail": "",
+      "step": "skills"
+    },
+    {
+      "name": "Paso de revisión visible",
+      "ok": true,
+      "detail": "",
+      "step": "review"
+    },
+    {
+      "name": "Sin error de consentimiento antes de enviar",
+      "ok": true,
+      "detail": "0",
+      "step": "review"
+    },
+    {
+      "name": "Sin aviso de envío antes de tiempo",
+      "ok": true,
+      "detail": "0",
+      "step": "review"
+    },
+    {
+      "name": "Exige autorización antes de enviar",
+      "ok": true,
+      "detail": "rpc=0",
+      "step": "review"
+    },
+    {
+      "name": "Envío y pantalla de éxito",
+      "ok": true,
+      "detail": "",
+      "step": "review"
+    },
+    {
+      "name": "Portada móvil visible",
+      "ok": true,
+      "detail": "",
+      "step": "review"
+    },
+    {
+      "name": "Borrador recuperado tras recargar",
+      "ok": true,
+      "detail": "",
+      "step": "review"
+    },
+    {
+      "name": "Datos del borrador restaurados",
+      "ok": true,
+      "detail": "Carlos Ruiz",
+      "step": "review"
+    }
+  ],
+  "consoleErrors": []
+}
